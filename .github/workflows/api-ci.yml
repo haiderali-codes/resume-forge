@@ -44,6 +44,11 @@ jobs:
       REDIS_HOST: localhost
       REDIS_PORT: 6379
       NODE_ENV: test
+      STRIPE_SECRET_KEY: sk_test_ci_placeholder
+      STRIPE_PUBLISHABLE_KEY: pk_test_ci_placeholder
+      APP_URL: http://localhost:3000
+      STRIPE_PRO_PRICE_ID: price_ci_placeholder
+      STRIPE_WEBHOOK_SECRET: whsec_ci_placeholder
 
     steps:
       - name: Checkout repository
