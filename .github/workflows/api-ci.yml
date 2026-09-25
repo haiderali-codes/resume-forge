@@ -51,7 +51,7 @@ jobs:
       STRIPE_WEBHOOK_SECRET: "whsec_ci_placeholder"
       APP_URL: "http://localhost:3000"
 
-      S3_ENDPOINT: "http://localhost:4566"
+      S3_ENDPOINT: "http://localhost:9090"
       S3_ACCESS_KEY_ID: "resumeforge"
       S3_SECRET_ACCESS_KEY: "resumeforge-local-password"
       S3_BUCKET: "resumes"
@@ -85,10 +85,10 @@ jobs:
         run: |
           docker run -d \
             --name resumeforge-s3 \
-            -p 4566:4566 \
-            -e SERVICES=s3 \
-            -e AWS_DEFAULT_REGION=us-east-1 \
-            localstack/localstack:latest
+            -p 9090:9090 \
+            -p 9191:9191 \
+            -e COM_ADOBE_TESTING_S3MOCK_STORE_INITIAL_BUCKETS=resumes \
+            adobe/s3mock:latest
 
       - name: Wait for S3 emulator
         run: |
@@ -96,7 +96,7 @@ jobs:
 
           for i in {1..30}; do
             if curl --fail --silent \
-              http://localhost:4566/_localstack/health > /dev/null; then
+              http://localhost:9090/favicon.ico > /dev/null; then
               ready=1
               echo "S3 emulator is ready"
               break
@@ -111,10 +111,6 @@ jobs:
             docker logs resumeforge-s3
             exit 1
           fi
-
-          curl --fail --silent \
-            -X PUT \
-            http://localhost:4566/resumes
 
       - name: Run API tests
         run: pnpm --filter api test
