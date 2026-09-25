@@ -18,6 +18,13 @@ enum ResumeProcessingStatus {
   FAILED
 }
 
+enum MatchProcessingStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
 enum SubscriptionPlan {
   FREE
   PRO
@@ -43,6 +50,7 @@ model User {
 
   sessions        UserSession[]
   resumes         Resume[]
+  resumeMatches ResumeMatch[]
   jobDescriptions JobDescription[]
   subscription    UserSubscription?
   usagePeriods    UsagePeriod[]
@@ -99,6 +107,7 @@ model Resume {
   errorMessage  String?
   createdAt     DateTime               @default(now())
   updatedAt     DateTime               @updatedAt
+  matches ResumeMatch[]
 
   user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   versions ResumeVersion[]
@@ -131,6 +140,7 @@ model JobDescription {
   company     String?
   description String
   sourceUrl   String?
+  matches ResumeMatch[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -151,4 +161,29 @@ model UserSession {
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+
+model ResumeMatch {
+  id                String                @id @default(uuid())
+  userId            String
+  resumeId          String
+  jobDescriptionId  String
+  status            MatchProcessingStatus @default(PENDING)
+  progress          Int                   @default(0)
+  matchScore        Int?
+  matchedSkills     Json?
+  missingSkills     Json?
+  recommendations   Json?
+  errorMessage      String?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resume         Resume         @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  jobDescription JobDescription @relation(fields: [jobDescriptionId], references: [id], onDelete: Cascade)
+
+  @@unique([resumeId, jobDescriptionId])
+  @@index([userId])
+  @@index([status])
 }
