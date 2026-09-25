@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum ResumeProcessingStatus {
+  UPLOADED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum SubscriptionPlan {
+  FREE
+  PRO
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  PAST_DUE
+}
+
+model User {
+  id              String    @id @default(uuid())
+  email           String    @unique
+  passwordHash    String
+  firstName       String?
+  lastName        String?
+  role            UserRole  @default(USER)
+  isActive        Boolean   @default(true)
+  emailVerifiedAt DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  sessions        UserSession[]
+  resumes         Resume[]
+  jobDescriptions JobDescription[]
+  subscription    UserSubscription?
+  usagePeriods    UsagePeriod[]
+
+  @@index([email])
+}
+
+model UserSubscription {
+  id                  String             @id @default(uuid())
+  userId              String             @unique
+  plan                SubscriptionPlan   @default(FREE)
+  status              SubscriptionStatus @default(ACTIVE)
+  resumeUploadLimit   Int                @default(3)
+  jobDescriptionLimit Int                @default(5)
+  currentPeriodStart  DateTime
+  currentPeriodEnd    DateTime
+
+  stripeCustomerId     String? @unique
+  stripeSubscriptionId String? @unique
+  stripePriceId        String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UsagePeriod {
+  id              String   @id @default(uuid())
+  userId          String
+  periodStart     DateTime
+  periodEnd       DateTime
+  resumeUploads   Int      @default(0)
+  jobDescriptions Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, periodStart])
+  @@index([userId, periodEnd])
+}
+
+model Resume {
+  id            String                 @id @default(uuid())
+  userId        String
+  originalName  String
+  storageKey    String                 @unique
+  mimeType      String
+  sizeBytes     Int
+  status        ResumeProcessingStatus @default(UPLOADED)
+  progress      Int                    @default(0)
+  extractedText String?
+  errorMessage  String?
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+
+  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  versions ResumeVersion[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+model ResumeVersion {
+  id            String   @id @default(uuid())
+  resumeId      String
+  versionNumber Int
+  storageKey    String
+  originalName  String
+  mimeType      String
+  sizeBytes     Int
+  extractedText String?
+  createdAt     DateTime @default(now())
+
+  resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  @@unique([resumeId, versionNumber])
+  @@index([resumeId])
+}
+
+model JobDescription {
+  id          String   @id @default(uuid())
+  userId      String
+  title       String
+  company     String?
+  description String
+  sourceUrl   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model UserSession {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
