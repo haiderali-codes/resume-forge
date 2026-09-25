@@ -40,19 +40,21 @@ jobs:
           --health-retries 10
 
     env:
-      DATABASE_URL: postgresql://resumeforge:resumeforge@localhost:5432/resumeforge
-      REDIS_HOST: localhost
-      REDIS_PORT: 6379
-      NODE_ENV: test
-      STRIPE_SECRET_KEY: sk_test_ci_placeholder
-      STRIPE_PUBLISHABLE_KEY: pk_test_ci_placeholder
-      APP_URL: http://localhost:3000
-      STRIPE_PRO_PRICE_ID: price_ci_placeholder
-      STRIPE_WEBHOOK_SECRET: whsec_ci_placeholder
-      S3_ENDPOINT: http://localhost:9000
-      S3_ACCESS_KEY_ID: resumeforge
-      S3_SECRET_ACCESS_KEY: resumeforge-local-password
-      S3_BUCKET: resumes
+      DATABASE_URL: "postgresql://resumeforge:resumeforge@localhost:5432/resumeforge"
+      REDIS_HOST: "localhost"
+      REDIS_PORT: "6379"
+      NODE_ENV: "test"
+
+      STRIPE_SECRET_KEY: "sk_test_ci_placeholder"
+      STRIPE_PUBLISHABLE_KEY: "pk_test_ci_placeholder"
+      STRIPE_PRO_PRICE_ID: "price_ci_placeholder"
+      STRIPE_WEBHOOK_SECRET: "whsec_ci_placeholder"
+      APP_URL: "http://localhost:3000"
+
+      S3_ENDPOINT: "http://localhost:9000"
+      S3_ACCESS_KEY_ID: "resumeforge"
+      S3_SECRET_ACCESS_KEY: "resumeforge-local-password"
+      S3_BUCKET: "resumes"
 
     steps:
       - name: Checkout repository
@@ -78,7 +80,7 @@ jobs:
       - name: Apply database migrations
         run: pnpm --filter api exec prisma migrate deploy
 
-            - name: Start MinIO
+      - name: Start MinIO
         run: |
           docker run -d \
             --name resumeforge-minio \
