@@ -51,10 +51,11 @@ jobs:
       STRIPE_WEBHOOK_SECRET: "whsec_ci_placeholder"
       APP_URL: "http://localhost:3000"
 
-      S3_ENDPOINT: "http://localhost:9000"
+      S3_ENDPOINT: "http://localhost:4566"
       S3_ACCESS_KEY_ID: "resumeforge"
       S3_SECRET_ACCESS_KEY: "resumeforge-local-password"
       S3_BUCKET: "resumes"
+      AWS_REGION: "us-east-1"
 
     steps:
       - name: Checkout repository
@@ -80,32 +81,40 @@ jobs:
       - name: Apply database migrations
         run: pnpm --filter api exec prisma migrate deploy
 
-      - name: Start MinIO
+      - name: Start S3 emulator
         run: |
           docker run -d \
-            --name resumeforge-minio \
-            -p 9000:9000 \
-            -p 9001:9001 \
-            -e MINIO_ROOT_USER=resumeforge \
-            -e MINIO_ROOT_PASSWORD=resumeforge-local-password \
-            quay.io/minio/minio:latest \
-            server /data --console-address ":9001"
+            --name resumeforge-s3 \
+            -p 4566:4566 \
+            -e SERVICES=s3 \
+            -e AWS_DEFAULT_REGION=us-east-1 \
+            localstack/localstack:latest
 
-      - name: Wait for MinIO
+      - name: Wait for S3 emulator
         run: |
+          ready=0
+
           for i in {1..30}; do
-            if curl --fail --silent http://localhost:9000/minio/health/live; then
-              echo "MinIO is ready"
-              exit 0
+            if curl --fail --silent \
+              http://localhost:4566/_localstack/health > /dev/null; then
+              ready=1
+              echo "S3 emulator is ready"
+              break
             fi
 
-            echo "Waiting for MinIO..."
+            echo "Waiting for S3 emulator..."
             sleep 2
           done
 
-          echo "MinIO did not become ready"
-          docker logs resumeforge-minio
-          exit 1
+          if [ "$ready" -ne 1 ]; then
+            echo "S3 emulator did not become ready"
+            docker logs resumeforge-s3
+            exit 1
+          fi
+
+          curl --fail --silent \
+            -X PUT \
+            http://localhost:4566/resumes
 
       - name: Run API tests
         run: pnpm --filter api test
