@@ -12,6 +12,7 @@ import { JobDescriptionModule } from './job-description/job-description.module.j
 import { ProcessingModule } from './processing/processing.module.js';
 import { UsageModule } from './usage/usage.module.js';
 import { BillingModule } from './billing/billing.module.js';
+import { MatchingModule } from './matching/matching.module.js';
 
 @Module({
   imports: [
@@ -22,7 +23,8 @@ import { BillingModule } from './billing/billing.module.js';
     StorageModule,
     ResumeModule,
     JobDescriptionModule,
-    UsageModule
+    UsageModule,
+    MatchingModule
   ],
   controllers: [
     AppController,
