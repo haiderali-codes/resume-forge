@@ -45,8 +45,33 @@ async function bootstrap() {
   });
 
   app.enableCors({
-    origin: 'http://localhost:3000',
+    origin: (origin, callback) => {
+      const allowed =
+        !origin ||
+        /^http:\/\/(localhost|127\.0\.0\.1):300[0-9]$/.test(
+          origin,
+        );
+
+      if (allowed) {
+        callback(null, true);
+      } else {
+        callback(new Error('Origin not allowed'), false);
+      }
+    },
     credentials: true,
+    methods: [
+      'GET',
+      'HEAD',
+      'POST',
+      'PUT',
+      'PATCH',
+      'DELETE',
+      'OPTIONS',
+    ],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+    ],
   });
 
   app.useGlobalPipes(

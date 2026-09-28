@@ -108,4 +108,43 @@ export class ResumeService {
       orderBy: { versionNumber: 'desc' },
     });
   }
+
+  async deleteResume(userId: string, resumeId: string) {
+    const resume = await this.prisma.resume.findFirst({
+      where: {
+        id: resumeId,
+        userId,
+      },
+      include: {
+        versions: true,
+      },
+    });
+
+    if (!resume) {
+      throw new NotFoundException('Resume not found');
+    }
+
+    await this.storage.delete(resume.storageKey);
+
+    await Promise.all(
+      resume.versions
+        .filter(
+          (version) => version.storageKey !== resume.storageKey,
+        )
+        .map((version) =>
+          this.storage.delete(version.storageKey),
+        ),
+    );
+
+    await this.prisma.resume.delete({
+      where: {
+        id: resumeId,
+      },
+    });
+
+    return {
+      message: 'Resume deleted successfully',
+      id: resumeId,
+    };
+  }
 }

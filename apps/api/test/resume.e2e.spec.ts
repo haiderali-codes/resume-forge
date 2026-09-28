@@ -119,7 +119,6 @@ describe('Resume processing API', () => {
         .expect(200);
 
       finalStatus = statusResponse.body;
-      console.log('Final resume status:', finalStatus);
       if (
         finalStatus.status === 'COMPLETED' ||
         finalStatus.status === 'FAILED'

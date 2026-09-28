@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Controller,
   Get,
+  Delete,
   Param,
   Post,
   Req,
@@ -19,6 +20,17 @@ import {
 import type { FastifyRequest } from 'fastify';
 import { SessionGuard } from '../auth/session.guard.js';
 import { ResumeService } from './resume.service.js';
+
+
+type AuthenticatedRequest = FastifyRequest & {
+  user: {
+    id: string;
+    email: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    role: string;
+  };
+};
 
 @Controller({
   path: 'resumes',
@@ -120,6 +132,17 @@ export class ResumeController {
     @Param('id') id: string,
   ) {
     return this.resumeService.getVersions(
+      request.user.id,
+      id,
+    );
+  }
+
+  @Delete(':id')
+  async delete(
+    @Req() request: AuthenticatedRequest,
+    @Param('id') id: string,
+  ) {
+    return this.resumeService.deleteResume(
       request.user.id,
       id,
     );

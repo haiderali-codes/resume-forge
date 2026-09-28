@@ -1,6 +1,11 @@
 import 'dotenv/config';
 import { Injectable } from '@nestjs/common';
-import { GetObjectCommand,PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
 
 @Injectable()
 export class StorageService {
@@ -34,19 +39,28 @@ export class StorageService {
   }
 
   async download(key: string): Promise<Buffer> {
-  const response = await this.client.send(
-    new GetObjectCommand({
-      Bucket: this.bucket,
-      Key: key,
-    }),
-  );
+    const response = await this.client.send(
+      new GetObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+      }),
+    );
 
-  if (!response.Body) {
-    throw new Error('Stored file has no content');
+    if (!response.Body) {
+      throw new Error('Stored file has no content');
+    }
+
+    const bytes = await response.Body.transformToByteArray();
+
+    return Buffer.from(bytes);
   }
-
-  const bytes = await response.Body.transformToByteArray();
-
-  return Buffer.from(bytes);
-}
+  
+  async delete(key: string): Promise<void> {
+    await this.client.send(
+      new DeleteObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+      }),
+    );
+  }
 }

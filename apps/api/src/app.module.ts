@@ -13,6 +13,8 @@ import { ProcessingModule } from './processing/processing.module.js';
 import { UsageModule } from './usage/usage.module.js';
 import { BillingModule } from './billing/billing.module.js';
 import { MatchingModule } from './matching/matching.module.js';
+import { AiModule } from './ai/ai.module.js';
+import { GenerationModule } from './generation/generation.module.js';
 
 @Module({
   imports: [
@@ -24,7 +26,9 @@ import { MatchingModule } from './matching/matching.module.js';
     ResumeModule,
     JobDescriptionModule,
     UsageModule,
-    MatchingModule
+    MatchingModule,
+    GenerationModule,
+    AiModule
   ],
   controllers: [
     AppController,
